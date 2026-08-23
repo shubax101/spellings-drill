@@ -304,11 +304,13 @@ function defaultState(){
   };
 }
 
+const STORAGE_KEY = 'spelling-drill-state';
+
 async function loadState(){
   try{
-    const res = await window.storage.get('state', false);
-    if(res && res.value){
-      state = JSON.parse(res.value);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
       // merge in any new built-in words not already present (won't duplicate)
       const known = new Set(state.bank.map(w => w.word.toLowerCase()));
       for(const w of BUILTIN_WORDS){
@@ -325,7 +327,7 @@ async function loadState(){
 
 async function saveState(){
   try{
-    await window.storage.set('state', JSON.stringify(state), false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch(e){
     console.error('Storage save failed', e);
   }
