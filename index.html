@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Aptitude Test</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,600;0,700;1,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper: #EAE3D2;
+    --paper-edge: #DCD3BC;
+    --ink: #1E2A44;
+    --ink-soft: #47536B;
+    --stamp-red: #9C3B34;
+    --seal-gold: #93701F;
+    --rule: #C7BEA4;
+    --good: #3F6B4A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 26px),
+      var(--paper);
+    color:var(--ink);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 14px 60px;
+    min-height:100vh;
+  }
+  .card{
+    width:100%;
+    max-width:480px;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    position:relative;
+    box-shadow:0 2px 0 var(--paper-edge), 0 14px 30px -18px rgba(30,42,68,0.5);
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:-8px; left:16px; right:16px; height:8px;
+    background-image: radial-gradient(circle, var(--paper) 2.4px, transparent 2.6px);
+    background-size: 16px 16px;
+  }
+  .header{
+    border-bottom:1.5px solid var(--ink);
+    padding:16px 20px 12px;
+    display:flex; justify-content:space-between; align-items:flex-end;
+  }
+  .header .title{
+    font-family:'Source Serif 4', serif; font-weight:700; font-style:italic;
+    font-size:19px; letter-spacing:0.02em;
+  }
+  .header .subtitle{
+    font-family:'IBM Plex Mono', monospace; font-size:10px;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px;
+  }
+  .header .rollno{ font-family:'IBM Plex Mono', monospace; font-size:11px; text-align:right; color:var(--ink-soft); line-height:1.5; }
+  .header .rollno b{ color:var(--ink); font-size:13px; }
+
+  .tabbar{
+    display:flex; border-bottom:1.5px solid var(--ink);
+  }
+  .tabbar button{
+    flex:1; font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+    text-transform:uppercase; letter-spacing:0.06em; padding:10px 4px;
+    background:transparent; border:none; border-right:1px solid var(--rule);
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .tabbar button:last-child{ border-right:none; }
+  .tabbar button.active{ background:var(--ink); color:var(--paper); }
+  .tabbar button .badge{
+    display:inline-block; margin-left:4px; min-width:14px; padding:0 3px;
+    background:var(--stamp-red); color:#fff; border-radius:8px; font-size:9px; line-height:14px;
+  }
+
+  .panel{ display:none; padding:20px 20px 8px; }
+  .panel.active{ display:block; }
+
+  .progressbar{
+    height:6px; background:var(--paper-edge); border:1px solid var(--rule); margin-bottom:14px; position:relative; overflow:hidden;
+  }
+  .progressbar .fill{ height:100%; background:var(--seal-gold); width:0%; transition:width .3s ease; }
+  .progress-label{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft);
+    display:flex; justify-content:space-between; margin-bottom:14px; margin-top:-6px;
+  }
+
+  .field-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+    color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px;
+  }
+  .marks-chip{ border:1px solid var(--ink); padding:2px 8px; border-radius:2px; color:var(--ink); background:rgba(30,42,68,0.04); }
+
+  .listen-zone{
+    text-align:center; padding:24px 10px 20px;
+    border:1px dashed var(--rule); border-radius:2px; margin-bottom:16px;
+    background:rgba(255,255,255,0.25);
+  }
+  .listen-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; }
+  .listen-btn{
+    width:60px; height:60px; border-radius:50%; border:1.5px solid var(--ink); background:var(--paper);
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:transform .12s ease, background .12s ease; color:var(--ink);
+  }
+  .listen-btn:hover{ background:var(--ink); color:var(--paper); }
+  .listen-btn:active{ transform:scale(0.94); }
+  .listen-btn svg{ width:22px; height:22px; }
+  .replay-hint{ margin-top:9px; font-size:11px; color:var(--ink-soft); }
+  .replay-hint button{ border:none; background:none; text-decoration:underline; font-family:'IBM Plex Sans', sans-serif; font-size:11px; color:var(--ink-soft); cursor:pointer; padding:0; }
+
+  .answer-line{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .answer-line label{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); white-space:nowrap; }
+  input[type="text"]{
+    flex:1; border:none; border-bottom:1.5px solid var(--ink); background:transparent;
+    font-family:'IBM Plex Mono', monospace; font-size:18px; letter-spacing:0.03em;
+    padding:6px 2px; color:var(--ink); outline:none;
+  }
+  input[type="text"]:disabled{ color:var(--ink-soft); }
+
+  .submit-row{ display:flex; gap:10px; margin:16px 0 6px; }
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em;
+    border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+    padding:10px 16px; cursor:pointer; border-radius:2px;
+  }
+  .btn.secondary{ background:transparent; color:var(--ink); }
+  .btn:disabled{ opacity:0.4; cursor:default; }
+
+  .verdict-zone{ min-height:110px; margin-top:6px; display:flex; align-items:center; justify-content:center; }
+  .stamp{ display:flex; flex-direction:column; align-items:center; gap:8px; transform:scale(1.5) rotate(-8deg); opacity:0; }
+  .stamp.show{ animation: stampdown .38s cubic-bezier(.2,.9,.3,1.1) forwards; }
+  @keyframes stampdown{
+    0%{ transform:scale(1.6) rotate(-10deg); opacity:0; }
+    60%{ transform:scale(0.94) rotate(-6deg); opacity:1; }
+    100%{ transform:scale(1) rotate(-6deg); opacity:1; }
+  }
+  .stamp-ring{
+    width:100px; height:100px; border-radius:50%; border:3px solid var(--stamp-red);
+    display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace;
+    font-weight:600; font-size:13px; letter-spacing:0.05em; text-transform:uppercase; color:var(--stamp-red); text-align:center;
+  }
+  .stamp.correct .stamp-ring{ border-color:var(--good); color:var(--good); }
+  .stamp-sub{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
+  .correction{ font-family:'Source Serif 4', serif; font-style:italic; font-size:15px; color:var(--stamp-red); }
+
+  .empty-note{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft);
+    text-align:center; padding:30px 10px; border:1px dashed var(--rule);
+  }
+
+  .review-list{ list-style:none; margin:0 0 14px; padding:0; max-height:180px; overflow-y:auto; border:1px solid var(--rule); }
+  .review-list li{
+    display:flex; justify-content:space-between; padding:8px 12px; font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px; border-bottom:1px solid var(--rule);
+  }
+  .review-list li:last-child{ border-bottom:none; }
+  .review-list .miss-count{ color:var(--stamp-red); }
+
+  textarea{
+    width:100%; min-height:110px; border:1px solid var(--ink); background:rgba(255,255,255,0.4);
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:10px; resize:vertical; color:var(--ink);
+  }
+  .import-note{ font-size:11.5px; color:var(--ink-soft); margin:8px 0 14px; line-height:1.5; }
+  .import-status{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; margin-top:8px; color:var(--good); min-height:16px; }
+
+  .ledger{
+    border-top:1.5px solid var(--ink); padding:12px 20px 18px;
+    display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft);
+  }
+  .ledger b{ color:var(--ink); font-size:12px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp, .stamp.show{ animation:none !important; opacity:1 !important; transform:scale(1) rotate(-4deg) !important; }
+  }
+  @media (max-width:400px){
+    .tabbar button{ font-size:9px; padding:9px 2px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div>
+      <div class="title">Spelling Aptitude Test</div>
+      <div class="subtitle">Dictation &middot; Descriptive</div>
+    </div>
+    <div class="rollno">Today <b id="todayDate">—</b></div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-tab="practice">Section A — Daily</button>
+    <button class="tab-btn" data-tab="review">Section B — Corrections <span class="badge" id="reviewBadge" style="display:none;">0</span></button>
+    <button class="tab-btn" data-tab="words">Section C — Word Bank</button>
+  </div>
+
+  <!-- PRACTICE TAB -->
+  <div class="panel active" id="panel-practice">
+    <div class="progressbar"><div class="fill" id="dailyFill"></div></div>
+    <div class="progress-label"><span>Today's target</span><span id="dailyProgressLabel">0 / 50</span></div>
+
+    <div class="field-row"><span>Difficulty Marks</span><span class="marks-chip" id="marksChip">— hidden —</span></div>
+
+    <div class="listen-zone">
+      <div class="listen-label">Press to hear the word</div>
+      <button class="listen-btn" id="listenBtn" aria-label="Play word">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      </button>
+      <div class="replay-hint">Didn't catch it? <button id="replayBtn">play again</button></div>
+    </div>
+
+    <div class="answer-line">
+      <label for="answerInput">Answer&nbsp;&mdash;</label>
+      <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the spelling here" disabled>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn" id="submitBtn" disabled>Submit</button>
+      <button class="btn secondary" id="nextBtn" style="display:none;">Next word →</button>
+    </div>
+
+    <div class="verdict-zone" id="verdictZone"></div>
+  </div>
+
+  <!-- REVIEW TAB -->
+  <div class="panel" id="panel-review">
+    <div id="reviewEmpty" class="empty-note">No mistakes queued right now — jab bhi koi word galat hoga, wo yahan aa jayega practice ke liye.</div>
+    <div id="reviewContent" style="display:none;">
+      <div class="field-row"><span>Words to revise</span><span class="marks-chip" id="reviewCount">0</span></div>
+      <div class="listen-zone">
+        <div class="listen-label">Press to hear the word</div>
+        <button class="listen-btn" id="reviewListenBtn" aria-label="Play word">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        </button>
+        <div class="replay-hint">Didn't catch it? <button id="reviewReplayBtn">play again</button></div>
+      </div>
+      <div class="answer-line">
+        <label for="reviewInput">Answer&nbsp;&mdash;</label>
+        <input type="text" id="reviewInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the spelling here">
+      </div>
+      <div class="submit-row">
+        <button class="btn" id="reviewSubmitBtn">Submit</button>
+        <button class="btn secondary" id="reviewNextBtn" style="display:none;">Next mistake →</button>
+      </div>
+      <div class="verdict-zone" id="reviewVerdictZone"></div>
+      <ul class="review-list" id="reviewList"></ul>
+    </div>
+  </div>
+
+  <!-- WORD BANK TAB -->
+  <div class="panel" id="panel-words">
+    <div class="field-row"><span>Words loaded</span><span class="marks-chip" id="bankCount">0</span></div>
+    <p class="import-note">
+      Naye words add karne ke liye ek line per word paste karo. Format: <code>word, difficulty</code> — difficulty optional hai (default 5). Example:<br>
+      <code>Bureaucracy, 29</code><br><code>Reminisce</code>
+    </p>
+    <textarea id="importBox" placeholder="Paste words here, one per line..."></textarea>
+    <div class="submit-row">
+      <button class="btn" id="importBtn">Add to word bank</button>
+      <button class="btn secondary" id="resetStatsBtn">Reset all stats</button>
+    </div>
+    <div class="import-status" id="importStatus"></div>
+  </div>
+
+  <div class="ledger">
+    <div>Attempted: <b id="statAttempt">0</b></div>
+    <div>Correct: <b id="statCorrect">0</b></div>
+    <div>Accuracy: <b id="statAccuracy">0%</b></div>
+    <div>Streak: <b id="statStreak">0</b></div>
+  </div>
+</div>
+
+<script>
+const BUILTIN_WORDS = [{"word":"Accommodate","score":38},{"word":"Committee","score":35},{"word":"Separate","score":35},{"word":"Occasion","score":32},{"word":"Maintenance","score":31},{"word":"Privilege","score":31},{"word":"Occurrence","score":29},{"word":"Bureaucracy","score":29},{"word":"Necessary","score":27},{"word":"Conscientious","score":27},{"word":"Millennium","score":26},{"word":"Definitely","score":23},{"word":"Mischievous","score":23},{"word":"Perseverance","score":23},{"word":"Entrepreneur","score":22},{"word":"Connoisseur","score":22},{"word":"Business","score":21},{"word":"Embarrass","score":21},{"word":"Conscious","score":21},{"word":"Embarrassment","score":20},{"word":"Calendar","score":19},{"word":"Restaurant","score":19},{"word":"Beginning","score":18},{"word":"Believe","score":18},{"word":"Argument","score":18},{"word":"Knowledge","score":18},{"word":"Receive","score":18},{"word":"Leisure","score":18},{"word":"Recommend","score":17},{"word":"Receipt","score":16},{"word":"Address","score":16},{"word":"Aesthetic","score":16},{"word":"Exaggerate","score":16},{"word":"Grammar","score":15},{"word":"Liaison","score":15},{"word":"Questionnaire","score":15},{"word":"Manoeuvre","score":15},{"word":"Consensus","score":15},{"word":"Deceive","score":15},{"word":"Parallel","score":15},{"word":"Supersede","score":15},{"word":"Colleague","score":15},{"word":"Dilemma","score":15},{"word":"Efficient","score":15},{"word":"Magnanimous","score":15},{"word":"Hierarchy","score":14},{"word":"Pronunciation","score":14},{"word":"Vacuum","score":14},{"word":"Conscience","score":14},{"word":"Acquire","score":14},{"word":"Discipline","score":14},{"word":"Miscellaneous","score":14},{"word":"Camouflage","score":14},{"word":"Indispensable","score":14},{"word":"Magnificent","score":14},{"word":"Guarantee","score":13},{"word":"Possession","score":13},{"word":"Professor","score":13},{"word":"Achieve","score":13},{"word":"Perceive","score":13},{"word":"Relevant","score":13},{"word":"Meticulous","score":13},{"word":"Accommodation","score":12},{"word":"Opportunity","score":12},{"word":"Sergeant","score":12},{"word":"Cemetery","score":12},{"word":"Schedule","score":12},{"word":"Conceive","score":12},{"word":"Foreign","score":12},{"word":"Grateful","score":12},{"word":"Humorous","score":12},{"word":"Resplendent","score":12},{"word":"Amateur","score":12},{"word":"Definition","score":11},{"word":"Environment","score":11},{"word":"Exhilarate","score":11},{"word":"Existence","score":11},{"word":"Government","score":11},{"word":"Performance","score":11},{"word":"Reference","score":11},{"word":"Audience","score":11},{"word":"Dictionary","score":11},{"word":"Acquiesce","score":11},{"word":"Delicious","score":11},{"word":"Fabulous","score":11},{"word":"Irrelevant","score":11},{"word":"Noticeable","score":11},{"word":"Omission","score":11},{"word":"Vicious","score":11},{"word":"Gregarious","score":11},{"word":"Surveillance","score":11},{"word":"Ubiquitous","score":11},{"word":"Explanation","score":10},{"word":"Immediately","score":10},{"word":"License","score":10},{"word":"Protein","score":10},{"word":"Received","score":10},{"word":"Scientist","score":10},{"word":"Weather","score":10},{"word":"Acoustic","score":10},{"word":"Bouquet","score":10},{"word":"Etiquette","score":10},{"word":"Inoculate","score":10},{"word":"Pseudonym","score":10},{"word":"Psychology","score":10},{"word":"Absence","score":10},{"word":"Acclaim","score":10},{"word":"Achievement","score":10},{"word":"Acknowledge","score":10},{"word":"Aggravate","score":10},{"word":"Apparent","score":10},{"word":"Appearance","score":10},{"word":"Benevolent","score":10},{"word":"Precious","score":10},{"word":"Tyranny","score":10},{"word":"Weird","score":10},{"word":"Appreciate","score":10},{"word":"Apparently","score":9},{"word":"Assassination","score":9},{"word":"Combination","score":9},{"word":"Commit","score":9},{"word":"Equipment","score":9},{"word":"Excellent","score":9},{"word":"Hygiene","score":9},{"word":"Immediate","score":9},{"word":"Independent","score":9},{"word":"Lieutenant","score":9},{"word":"Occasionally","score":9},{"word":"Personnel","score":9},{"word":"Architecture","score":9},{"word":"Cautious","score":9},{"word":"Commitment","score":9},{"word":"Definite","score":9},{"word":"Desperate","score":9},{"word":"Eminent","score":9},{"word":"Essential","score":9},{"word":"Grandeur","score":9},{"word":"Irresistible","score":9},{"word":"Jealous","score":9},{"word":"Permanent","score":9},{"word":"Rhythm","score":9},{"word":"Belligerent","score":9},{"word":"Endeavour","score":9},{"word":"Ephemeral","score":9},{"word":"Harass","score":9},{"word":"Attention","score":8},{"word":"Beggar","score":8},{"word":"Bureaucrat","score":8},{"word":"Countenance","score":8},{"word":"Decision","score":8},{"word":"Experiment","score":8},{"word":"Harassment","score":8},{"word":"Illegitimate","score":8},{"word":"Individual","score":8},{"word":"Interrupt","score":8},{"word":"Manipulate","score":8},{"word":"Necessity","score":8},{"word":"Abundance","score":8},{"word":"Approach","score":8},{"word":"Appropriate","score":8},{"word":"Benign","score":8},{"word":"Challenge","score":8},{"word":"Colloquial","score":8},{"word":"Consequence","score":8},{"word":"Courteous","score":8},{"word":"Evidence","score":8},{"word":"Exuberant","score":8},{"word":"Inadvertent","score":8},{"word":"Minuscule","score":8},{"word":"Mysterious","score":8},{"word":"Pernicious","score":8},{"word":"Precision","score":8},{"word":"Professional","score":8},{"word":"Pursuit","score":8},{"word":"Quarantine","score":8},{"word":"Recalcitrant","score":8},{"word":"Successful","score":8},{"word":"Journey","score":8},{"word":"Ambiguous","score":8},{"word":"Contemporary","score":8},{"word":"Idiosyncrasy","score":8},{"word":"Inevitable","score":8},{"word":"Innocuous","score":8},{"word":"Voluntary","score":8},{"word":"Advertisement","score":7},{"word":"Announcement","score":7},{"word":"Athlete","score":7},{"word":"Comparison","score":7},{"word":"Disappear","score":7},{"word":"Ensure","score":7},{"word":"Experience","score":7},{"word":"Handkerchief","score":7},{"word":"Marriage","score":7},{"word":"Mathematics","score":7},{"word":"Millionaire","score":7},{"word":"Mining","score":7},{"word":"Niece","score":7},{"word":"Procedure","score":7},{"word":"Referred","score":7},{"word":"Sanctuaries","score":7},{"word":"Secretary","score":7},{"word":"Temperature","score":7},{"word":"Tomorrow","score":7},{"word":"Acquaintance","score":6},{"word":"Adventure","score":6},{"word":"Affiliate","score":6},{"word":"Almighty","score":6},{"word":"Arrangement","score":6},{"word":"Assassinate","score":6},{"word":"Assessment","score":6},{"word":"Assignment","score":6},{"word":"Attitude","score":6},{"word":"Ceremony","score":6},{"word":"Changeable","score":6},{"word":"Community","score":6},{"word":"Conference","score":6},{"word":"Discrimination","score":6},{"word":"Discussion","score":6},{"word":"Doctor","score":6},{"word":"Eradication","score":6},{"word":"Excellence","score":6},{"word":"Guidance","score":6},{"word":"Intelligence","score":6},{"word":"Legionnaire","score":6},{"word":"Onomatopoeia","score":6},{"word":"Passenger","score":6},{"word":"Peaceful","score":6},{"word":"Philosophy","score":6},{"word":"Refrigerator","score":6},{"word":"Scenery","score":6},{"word":"Teacher","score":6},{"word":"Temperament","score":6},{"word":"Truly","score":6},{"word":"Tuition","score":6},{"word":"Twelfth","score":6},{"word":"Acknowledgment","score":5},{"word":"Admission","score":5},{"word":"Advertise","score":5},{"word":"Attendance","score":5},{"word":"Career","score":5},{"word":"Carrier","score":5},{"word":"Category","score":5},{"word":"Civilisation","score":5},{"word":"Competition","score":5},{"word":"Competitor","score":5},{"word":"Curriculum","score":5},{"word":"Descendant","score":5},{"word":"Despite","score":5},{"word":"Election","score":5},{"word":"Embarrassing","score":5},{"word":"Executive","score":5},{"word":"Field","score":5},{"word":"Foreseeable","score":5},{"word":"Independence","score":5},{"word":"Insight","score":5},{"word":"Irresponsible","score":5},{"word":"Jewellery","score":5},{"word":"Kaleidoscope","score":5},{"word":"Knight","score":5},{"word":"Laboratory","score":5},{"word":"Lecture","score":5},{"word":"Literature","score":5},{"word":"Luxurious","score":5},{"word":"Machiavellian","score":5},{"word":"Matter","score":5},{"word":"Misspell","score":5},{"word":"Neutral","score":5},{"word":"Occasional","score":5},{"word":"Occurred","score":5},{"word":"Olfactory","score":5},{"word":"Parliament","score":5},{"word":"Personal","score":5},{"word":"Personality","score":5},{"word":"Picture","score":5},{"word":"Possible","score":5},{"word":"Premier","score":5},{"word":"Procession","score":5},{"word":"Profession","score":5},{"word":"Refer","score":5},{"word":"Rehearsal","score":5},{"word":"Religious","score":5},{"word":"Research","score":5},{"word":"Solution","score":5},{"word":"Substantive","score":5},{"word":"Surrounding","score":5},{"word":"Technology","score":5},{"word":"Territory","score":5},{"word":"Treasure","score":5},{"word":"Vaccination","score":5},{"word":"Vehicle","score":5},{"word":"Village","score":5},{"word":"Violin","score":5},{"word":"Acceptable","score":4},{"word":"Accidentally","score":4},{"word":"Accompany","score":4},{"word":"Actually","score":4},{"word":"Administration","score":4},{"word":"Advisable","score":4},{"word":"Already","score":4},{"word":"Amendment","score":4},{"word":"Article","score":4}];
+
+const DAILY_TARGET = 50;
+let state = null;
+let current = null;         // {word, score} being practiced in Section A
+let reviewCurrent = null;   // word string being practiced in Section B
+let awaitingAnswer = false;
+let reviewAwaiting = false;
+
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function niceDate(){
+  const d = new Date();
+  return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function defaultState(){
+  return {
+    bank: BUILTIN_WORDS.slice(),
+    history: {},   // lower(word) -> {word, correct, wrong}
+    wrong: [],     // list of lower(word) currently queued for review
+    daily: {}      // date -> {done:[lower(word)], correct, total}
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('state', false);
+    if(res && res.value){
+      state = JSON.parse(res.value);
+      // merge in any new built-in words not already present (won't duplicate)
+      const known = new Set(state.bank.map(w => w.word.toLowerCase()));
+      for(const w of BUILTIN_WORDS){
+        if(!known.has(w.word.toLowerCase())) state.bank.push(w);
+      }
+    } else {
+      state = defaultState();
+    }
+  } catch(e){
+    state = defaultState();
+  }
+  await saveState();
+}
+
+async function saveState(){
+  try{
+    await window.storage.set('state', JSON.stringify(state), false);
+  } catch(e){
+    console.error('Storage save failed', e);
+  }
+}
+
+function getDaily(){
+  const key = todayKey();
+  if(!state.daily[key]) state.daily[key] = { done: [], correct: 0, total: 0 };
+  return state.daily[key];
+}
+
+function weightedPick(list){
+  const total = list.reduce((s,w)=>s+w.score, 0) || list.length;
+  let r = Math.random() * total;
+  for(const w of list){
+    r -= (w.score || 1);
+    if(r <= 0) return w;
+  }
+  return list[list.length-1];
+}
+
+function speak(word){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = 0.85;
+  u.lang = 'en-US';
+  window.speechSynthesis.speak(u);
+}
+
+function refreshGlobalStats(){
+  let attempted = 0, correct = 0;
+  for(const k in state.history){
+    attempted += state.history[k].correct + state.history[k].wrong;
+    correct += state.history[k].correct;
+  }
+  document.getElementById('statAttempt').textContent = attempted;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statAccuracy').textContent = attempted ? Math.round(correct/attempted*100)+'%' : '0%';
+
+  // streak = consecutive days (including today) that hit the daily target
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const day = state.daily[key];
+    if(day && day.done.length >= DAILY_TARGET){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+
+  document.getElementById('bankCount').textContent = state.bank.length;
+  const badge = document.getElementById('reviewBadge');
+  if(state.wrong.length > 0){ badge.style.display='inline-block'; badge.textContent = state.wrong.length; }
+  else badge.style.display='none';
+}
+
+function refreshDailyBar(){
+  const day = getDaily();
+  const pct = Math.min(100, Math.round(day.done.length / DAILY_TARGET * 100));
+  document.getElementById('dailyFill').style.width = pct + '%';
+  document.getElementById('dailyProgressLabel').textContent = day.done.length + ' / ' + DAILY_TARGET;
+}
+
+function recordResult(word, isCorrect){
+  const key = word.toLowerCase();
+  if(!state.history[key]) state.history[key] = { word: word, correct:0, wrong:0 };
+  if(isCorrect) state.history[key].correct++; else state.history[key].wrong++;
+
+  if(isCorrect){
+    state.wrong = state.wrong.filter(w => w !== key);
+  } else {
+    if(!state.wrong.includes(key)) state.wrong.push(key);
+  }
+}
+
+/* ---------- PRACTICE TAB ---------- */
+
+const qElems = {
+  marksChip: document.getElementById('marksChip'),
+  listenBtn: document.getElementById('listenBtn'),
+  replayBtn: document.getElementById('replayBtn'),
+  answerInput: document.getElementById('answerInput'),
+  submitBtn: document.getElementById('submitBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  verdictZone: document.getElementById('verdictZone'),
+};
+
+function loadNextPractice(){
+  const day = getDaily();
+  const doneSet = new Set(day.done);
+  let pool = state.bank.filter(w => !doneSet.has(w.word.toLowerCase()));
+  if(pool.length === 0) pool = state.bank.slice();
+
+  // 35% chance to pull from wrong queue (words needing revision) if available and not done today
+  const wrongPool = pool.filter(w => state.wrong.includes(w.word.toLowerCase()));
+  if(wrongPool.length > 0 && Math.random() < 0.35){
+    current = wrongPool[Math.floor(Math.random()*wrongPool.length)];
+  } else {
+    current = weightedPick(pool);
+  }
+
+  qElems.marksChip.textContent = '— hidden —';
+  qElems.answerInput.value = '';
+  qElems.answerInput.disabled = false;
+  qElems.submitBtn.disabled = false;
+  qElems.nextBtn.style.display = 'none';
+  qElems.verdictZone.innerHTML = '';
+  awaitingAnswer = true;
+  qElems.answerInput.focus();
+
+  speak(current.word);
+}
+
+function stampMarkup(isCorrect, word){
+  return `
+    <div class="stamp-ring">${isCorrect ? 'Correct' : 'Incorrect'}</div>
+    ${isCorrect ? '' : `<div class="correction">${word}</div>`}
+    <div class="stamp-sub">${isCorrect ? 'Well answered.' : 'Correct spelling above.'}</div>
+  `;
+}
+
+function showStamp(zoneEl, isCorrect, word){
+  const wrap = document.createElement('div');
+  wrap.className = 'stamp' + (isCorrect ? ' correct' : '');
+  wrap.innerHTML = stampMarkup(isCorrect, word);
+  zoneEl.innerHTML = '';
+  zoneEl.appendChild(wrap);
+  requestAnimationFrame(()=> wrap.classList.add('show'));
+}
+
+async function submitPracticeAnswer(){
+  if(!awaitingAnswer) return;
+  const given = qElems.answerInput.value.trim().toLowerCase();
+  const isCorrect = given === current.word.toLowerCase();
+
+  const day = getDaily();
+  const key = current.word.toLowerCase();
+  if(!day.done.includes(key)) day.done.push(key);
+  day.total++;
+  if(isCorrect) day.correct++;
+
+  recordResult(current.word, isCorrect);
+
+  qElems.marksChip.textContent = current.score + ' marks';
+  qElems.answerInput.disabled = true;
+  qElems.submitBtn.disabled = true;
+  qElems.nextBtn.style.display = 'inline-block';
+  awaitingAnswer = false;
+
+  showStamp(qElems.verdictZone, isCorrect, current.word);
+  refreshGlobalStats();
+  refreshDailyBar();
+  renderReviewList();
+  await saveState();
+}
+
+qElems.listenBtn.addEventListener('click', ()=>{ if(current) speak(current.word); });
+qElems.replayBtn.addEventListener('click', ()=>{ if(current) speak(current.word); });
+qElems.submitBtn.addEventListener('click', submitPracticeAnswer);
+qElems.nextBtn.addEventListener('click', loadNextPractice);
+qElems.answerInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitPracticeAnswer(); }
+});
+
+/* ---------- REVIEW TAB ---------- */
+
+const rElems = {
+  empty: document.getElementById('reviewEmpty'),
+  content: document.getElementById('reviewContent'),
+  count: document.getElementById('reviewCount'),
+  listenBtn: document.getElementById('reviewListenBtn'),
+  replayBtn: document.getElementById('reviewReplayBtn'),
+  input: document.getElementById('reviewInput'),
+  submitBtn: document.getElementById('reviewSubmitBtn'),
+  nextBtn: document.getElementById('reviewNextBtn'),
+  verdictZone: document.getElementById('reviewVerdictZone'),
+  list: document.getElementById('reviewList'),
+};
+
+function bankWordFor(lowerWord){
+  return state.bank.find(w => w.word.toLowerCase() === lowerWord) || { word: lowerWord, score: 5 };
+}
+
+function loadNextReview(){
+  if(state.wrong.length === 0){
+    rElems.empty.style.display = 'block';
+    rElems.content.style.display = 'none';
+    reviewCurrent = null;
+    return;
+  }
+  rElems.empty.style.display = 'none';
+  rElems.content.style.display = 'block';
+
+  const key = state.wrong[Math.floor(Math.random()*state.wrong.length)];
+  reviewCurrent = bankWordFor(key);
+
+  rElems.count.textContent = state.wrong.length;
+  rElems.input.value = '';
+  rElems.input.disabled = false;
+  rElems.submitBtn.disabled = false;
+  rElems.nextBtn.style.display = 'none';
+  rElems.verdictZone.innerHTML = '';
+  reviewAwaiting = true;
+  rElems.input.focus();
+
+  speak(reviewCurrent.word);
+}
+
+async function submitReviewAnswer(){
+  if(!reviewAwaiting || !reviewCurrent) return;
+  const given = rElems.input.value.trim().toLowerCase();
+  const isCorrect = given === reviewCurrent.word.toLowerCase();
+
+  recordResult(reviewCurrent.word, isCorrect);
+
+  rElems.input.disabled = true;
+  rElems.submitBtn.disabled = true;
+  rElems.nextBtn.style.display = 'inline-block';
+  reviewAwaiting = false;
+
+  showStamp(rElems.verdictZone, isCorrect, reviewCurrent.word);
+  refreshGlobalStats();
+  renderReviewList();
+  await saveState();
+}
+
+function renderReviewList(){
+  rElems.list.innerHTML = '';
+  const sorted = state.wrong
+    .map(k => ({ key:k, entry: state.history[k] || {word:k, wrong:1, correct:0} }))
+    .sort((a,b)=> (b.entry.wrong - a.entry.wrong));
+  for(const item of sorted){
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${item.entry.word}</span><span class="miss-count">missed ×${item.entry.wrong}</span>`;
+    rElems.list.appendChild(li);
+  }
+  rElems.count.textContent = state.wrong.length;
+}
+
+rElems.listenBtn.addEventListener('click', ()=>{ if(reviewCurrent) speak(reviewCurrent.word); });
+rElems.replayBtn.addEventListener('click', ()=>{ if(reviewCurrent) speak(reviewCurrent.word); });
+rElems.submitBtn.addEventListener('click', submitReviewAnswer);
+rElems.nextBtn.addEventListener('click', loadNextReview);
+rElems.input.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitReviewAnswer(); }
+});
+
+/* ---------- WORD BANK TAB ---------- */
+
+document.getElementById('importBtn').addEventListener('click', async ()=>{
+  const raw = document.getElementById('importBox').value;
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const known = new Set(state.bank.map(w=>w.word.toLowerCase()));
+  let added = 0;
+  for(const line of lines){
+    const parts = line.split(',').map(p=>p.trim());
+    const word = parts[0];
+    if(!word) continue;
+    const score = parts[1] ? parseInt(parts[1],10) : 5;
+    const key = word.toLowerCase();
+    if(known.has(key)) continue;
+    state.bank.push({ word: word, score: isNaN(score) ? 5 : score });
+    known.add(key);
+    added++;
+  }
+  document.getElementById('importStatus').textContent = added > 0
+    ? `${added} naye words add ho gaye. Total bank: ${state.bank.length}`
+    : 'Koi naya word nahi mila (shayad already list me hai).';
+  document.getElementById('importBox').value = '';
+  refreshGlobalStats();
+  await saveState();
+});
+
+document.getElementById('resetStatsBtn').addEventListener('click', async ()=>{
+  if(!confirm('Sab stats aur mistakes reset ho jayenge (word bank safe rahega). Confirm?')) return;
+  state.history = {};
+  state.wrong = [];
+  state.daily = {};
+  refreshGlobalStats();
+  refreshDailyBar();
+  renderReviewList();
+  document.getElementById('importStatus').textContent = 'Stats reset ho gaye.';
+  await saveState();
+});
+
+/* ---------- TABS ---------- */
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'review' && !reviewCurrent) loadNextReview();
+  });
+});
+
+/* ---------- INIT ---------- */
+
+(async function init(){
+  document.getElementById('todayDate').textContent = niceDate();
+  await loadState();
+  refreshGlobalStats();
+  refreshDailyBar();
+  renderReviewList();
+  loadNextPractice();
+})();
+</script>
+
+</body>
+</html>
