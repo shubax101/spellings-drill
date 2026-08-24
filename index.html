@@ -92,7 +92,7 @@
   }
   .set-nav-btn:hover:not(:disabled){ background:var(--ink); color:var(--paper); }
   .set-nav-btn:disabled{ opacity:0.3; cursor:default; }
-  #setLabel{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); min-width:96px; text-align:center; }
+  #setLabel, #reviewSetLabel{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft); min-width:96px; text-align:center; }
 
   .progressbar{
     height:6px; background:var(--paper-edge); border:1px solid var(--rule); margin-bottom:14px; position:relative; overflow:hidden;
@@ -143,6 +143,8 @@
     padding:10px 16px; cursor:pointer; border-radius:2px;
   }
   .btn.secondary{ background:transparent; color:var(--ink); }
+  .btn.gold{ background:transparent; color:var(--seal-gold); border-color:var(--seal-gold); }
+  .btn.gold:hover{ background:var(--seal-gold); color:#fff; }
   .btn.danger{ background:transparent; color:var(--stamp-red); border-color:var(--stamp-red); }
   .btn.danger:hover{ background:var(--stamp-red); color:#fff; }
   .btn:disabled{ opacity:0.4; cursor:default; }
@@ -169,19 +171,39 @@
     text-align:center; padding:30px 10px; border:1px dashed var(--rule);
   }
 
-  .review-list{ list-style:none; margin:0 0 14px; padding:0; max-height:220px; overflow-y:auto; border:1px solid var(--rule); }
-  .review-list li{
+  .review-list, .temp-list{ list-style:none; margin:0 0 14px; padding:0; max-height:220px; overflow-y:auto; border:1px solid var(--rule); }
+  .review-list li, .temp-list li{
     display:flex; justify-content:space-between; align-items:center; padding:8px 12px; font-family:'IBM Plex Mono', monospace;
     font-size:12.5px; border-bottom:1px solid var(--rule);
   }
-  .review-list li:last-child{ border-bottom:none; }
-  .review-actions{ display:flex; align-items:center; gap:8px; }
+  .review-list li:last-child, .temp-list li:last-child{ border-bottom:none; }
+  .review-actions{ display:flex; align-items:center; gap:6px; }
   .miss-count{ color:var(--stamp-red); }
-  .remove-word-btn{
+  .remove-word-btn, .pause-word-btn{
     width:20px; height:20px; border:1px solid var(--stamp-red); background:transparent; color:var(--stamp-red);
     border-radius:2px; cursor:pointer; font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center;
   }
   .remove-word-btn:hover{ background:var(--stamp-red); color:#fff; }
+  .pause-word-btn{ border-color:var(--seal-gold); color:var(--seal-gold); }
+  .pause-word-btn:hover{ background:var(--seal-gold); color:#fff; }
+  .restore-word-btn{
+    border:1px solid var(--good); background:transparent; color:var(--good); border-radius:2px;
+    cursor:pointer; font-family:'IBM Plex Mono', monospace; font-size:10px; padding:3px 9px; letter-spacing:0.05em; text-transform:uppercase;
+  }
+  .restore-word-btn:hover{ background:var(--good); color:#fff; }
+
+  .section-heading{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--ink-soft); margin:20px 0 8px; border-top:1px solid var(--rule); padding-top:16px;
+  }
+  .settings-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+  .settings-row label{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.08em; }
+  .settings-row input[type="number"]{
+    width:64px; border:1px solid var(--ink); background:rgba(255,255,255,0.4);
+    font-family:'IBM Plex Mono', monospace; font-size:13px; padding:6px 8px; color:var(--ink);
+  }
+  .settings-row .btn{ padding:8px 12px; }
+  .settings-hint{ font-size:11px; color:var(--ink-soft); margin:0 0 14px; line-height:1.5; }
 
   textarea{
     width:100%; min-height:110px; border:1px solid var(--ink); background:rgba(255,255,255,0.4);
@@ -228,37 +250,48 @@
       <span id="setLabel">Set 1 / 1</span>
       <button class="set-nav-btn" id="nextSetBtn" aria-label="Next set">›</button>
     </div>
-    <div class="progressbar"><div class="fill" id="dailyFill"></div></div>
-    <div class="progress-label"><span>This set's progress</span><span id="dailyProgressLabel">0 / 50</span></div>
 
-    <div class="field-row"><span>Difficulty Marks</span><span class="marks-chip" id="marksChip">— hidden —</span></div>
+    <div id="practiceEmptyNote" class="empty-note" style="display:none;">Is set ke saare words abhi temporarily remove kiye hue hain. Section C → Word Bank me jaake unhe restore karo, ya doosra set try karo.</div>
 
-    <div class="listen-zone">
-      <div class="listen-label">Press to hear the word</div>
-      <button class="listen-btn" id="listenBtn" aria-label="Play word">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
-      </button>
-      <div class="replay-hint">Didn't catch it? <button id="replayBtn">play again</button></div>
+    <div id="practiceActive">
+      <div class="progressbar"><div class="fill" id="dailyFill"></div></div>
+      <div class="progress-label"><span>This set's progress</span><span id="dailyProgressLabel">0 / 50</span></div>
+
+      <div class="field-row"><span>Difficulty Marks</span><span class="marks-chip" id="marksChip">— hidden —</span></div>
+
+      <div class="listen-zone">
+        <div class="listen-label">Press to hear the word</div>
+        <button class="listen-btn" id="listenBtn" aria-label="Play word">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        </button>
+        <div class="replay-hint">Didn't catch it? <button id="replayBtn">play again</button></div>
+      </div>
+
+      <div class="answer-line">
+        <label for="answerInput">Answer&nbsp;&mdash;</label>
+        <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the spelling here" disabled>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn" id="submitBtn" disabled>Submit</button>
+        <button class="btn secondary" id="nextBtn" style="display:none;">Next word →</button>
+        <button class="btn gold" id="tempRemoveBtn" style="display:none;" title="Ise practice rotation se temporarily hata do">Temporarily remove</button>
+      </div>
+
+      <div class="verdict-zone" id="verdictZone"></div>
     </div>
-
-    <div class="answer-line">
-      <label for="answerInput">Answer&nbsp;&mdash;</label>
-      <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the spelling here" disabled>
-    </div>
-
-    <div class="submit-row">
-      <button class="btn" id="submitBtn" disabled>Submit</button>
-      <button class="btn secondary" id="nextBtn" style="display:none;">Next word →</button>
-    </div>
-
-    <div class="verdict-zone" id="verdictZone"></div>
   </div>
 
   <!-- REVIEW TAB -->
   <div class="panel" id="panel-review">
-    <div id="reviewEmpty" class="empty-note">No mistakes queued right now — jab bhi koi word galat hoga, wo yahan permanently aa jayega, jab tak tum manually remove na karo.</div>
+    <div id="reviewEmpty" class="empty-note">No mistakes queued right now — jab bhi koi word galat hoga, wo yahan aa jayega, jab tak tum manually remove na karo.</div>
     <div id="reviewContent" style="display:none;">
-      <div class="field-row"><span>Words to revise</span><span class="marks-chip" id="reviewCount">0</span></div>
+      <div class="set-nav" id="reviewSetNav">
+        <button class="set-nav-btn" id="prevReviewSetBtn" aria-label="Previous batch">‹</button>
+        <span id="reviewSetLabel">Batch 1 / 1</span>
+        <button class="set-nav-btn" id="nextReviewSetBtn" aria-label="Next batch">›</button>
+      </div>
+      <div class="field-row"><span>Words in this batch</span><span class="marks-chip" id="reviewCount">0</span></div>
       <div class="listen-zone">
         <div class="listen-label">Press to hear the word</div>
         <button class="listen-btn" id="reviewListenBtn" aria-label="Play word">
@@ -273,7 +306,8 @@
       <div class="submit-row">
         <button class="btn" id="reviewSubmitBtn">Submit</button>
         <button class="btn secondary" id="reviewNextBtn" style="display:none;">Next mistake →</button>
-        <button class="btn danger" id="reviewRemoveBtn" style="display:none;">Remove this word</button>
+        <button class="btn gold" id="reviewTempRemoveBtn" style="display:none;" title="Yaad ho gaya — temporarily hata do">Temporarily remove</button>
+        <button class="btn danger" id="reviewRemoveBtn" style="display:none;">Remove permanently</button>
       </div>
       <div class="verdict-zone" id="reviewVerdictZone"></div>
       <ul class="review-list" id="reviewList"></ul>
@@ -294,6 +328,20 @@
       <button class="btn secondary" id="resetStatsBtn">Reset all stats</button>
     </div>
     <div class="import-status" id="importStatus"></div>
+
+    <div class="section-heading">Practice Settings</div>
+    <p class="settings-hint">Har word ek rotation cycle me kitni baar repeat ho (Section A aur Section B dono me apply hota hai). Isse ek hi word baar-baar nahi aata — har word ko barabar chance milta hai, sirf utni baar jitna tum set karo.</p>
+    <div class="settings-row">
+      <label for="retriesInput">Retries per word</label>
+      <input type="number" id="retriesInput" min="1" max="20" value="1">
+      <button class="btn secondary" id="saveRetriesBtn">Save</button>
+    </div>
+    <div class="import-status" id="retriesStatus"></div>
+
+    <div class="section-heading">Temporarily Removed <span class="marks-chip" id="tempRemovedCount">0</span></div>
+    <p class="settings-hint">Ye words rotation (Section A &amp; B) se hide hain kyunki tumne unhe "temporarily remove" kiya tha. Yahan se restore kar sakte ho.</p>
+    <div id="tempRemovedEmpty" class="empty-note" style="display:none;">Koi word temporarily remove nahi kiya gaya.</div>
+    <ul class="temp-list" id="tempRemovedList"></ul>
   </div>
 
   <div class="ledger">
@@ -309,9 +357,10 @@ const BUILTIN_WORDS = [{"word":"Accommodate","score":38},{"word":"Committee","sc
 
 const DAILY_TARGET = 50;
 const SET_SIZE = 50;
+const REVIEW_SET_SIZE = 20;
 let state = null;
 let current = null;         // {word, score} being practiced in Section A
-let reviewCurrent = null;   // word string being practiced in Section B
+let reviewCurrent = null;   // {word, score} being practiced in Section B
 let awaitingAnswer = false;
 let reviewAwaiting = false;
 
@@ -330,7 +379,12 @@ function defaultState(){
     history: {},   // lower(word) -> {word, correct, wrong}
     wrong: [],     // list of lower(word) currently queued for review (permanent until removed)
     daily: {},     // date -> {done:[lower(word)], correct, total}
-    currentSet: 0  // index of the 50-word set currently being practiced
+    currentSet: 0, // index of the 50-word set currently being practiced
+    reviewSet: 0,  // index of the review batch currently being revised (Section B day-wise split)
+    retries: 1,    // how many times each word repeats per rotation cycle
+    tempRemoved: [], // lower(word) list hidden from rotation until restored
+    practiceQueue: null, // internal: fair-rotation queue state for Section A
+    reviewQueueMeta: null // internal: fair-rotation queue state for Section B
   };
 }
 
@@ -353,7 +407,13 @@ async function loadState(){
     state = defaultState();
   }
   if(typeof state.currentSet !== 'number') state.currentSet = 0;
+  if(typeof state.reviewSet !== 'number') state.reviewSet = 0;
+  if(typeof state.retries !== 'number' || state.retries < 1) state.retries = 1;
+  if(!Array.isArray(state.tempRemoved)) state.tempRemoved = [];
+  if(!state.practiceQueue) state.practiceQueue = null;
+  if(!state.reviewQueueMeta) state.reviewQueueMeta = null;
   state.currentSet = clampSet(state.currentSet);
+  state.reviewSet = clampReviewSet(state.reviewSet);
   await saveState();
 }
 
@@ -371,6 +431,10 @@ function getDaily(){
   return state.daily[key];
 }
 
+function bankWordFor(lowerWord){
+  return state.bank.find(w => w.word.toLowerCase() === lowerWord) || { word: lowerWord, score: 5 };
+}
+
 /* ---------- SETS (bank cut into fixed 50-word blocks, in order) ---------- */
 
 function totalSets(){
@@ -379,6 +443,9 @@ function totalSets(){
 function getSetWords(index){
   const start = index * SET_SIZE;
   return state.bank.slice(start, start + SET_SIZE);
+}
+function activeSetWords(){
+  return getSetWords(state.currentSet).filter(w => !state.tempRemoved.includes(w.word.toLowerCase()));
 }
 function clampSet(index){
   return Math.min(Math.max(index, 0), totalSets() - 1);
@@ -389,14 +456,95 @@ function refreshSetLabel(){
   document.getElementById('nextSetBtn').disabled = state.currentSet >= totalSets() - 1;
 }
 
-function weightedPick(list){
-  const total = list.reduce((s,w)=>s+w.score, 0) || list.length;
-  let r = Math.random() * total;
-  for(const w of list){
-    r -= (w.score || 1);
-    if(r <= 0) return w;
+/* ---------- REVIEW BATCHES (wrong queue cut into day-wise chunks) ---------- */
+
+function reviewActiveKeys(){
+  // preserves insertion order, which roughly tracks the day a mistake was made
+  return state.wrong.filter(k => !state.tempRemoved.includes(k));
+}
+function totalReviewSets(){
+  return Math.max(1, Math.ceil(reviewActiveKeys().length / REVIEW_SET_SIZE));
+}
+function getReviewSetKeys(index){
+  const all = reviewActiveKeys();
+  const start = index * REVIEW_SET_SIZE;
+  return all.slice(start, start + REVIEW_SET_SIZE);
+}
+function clampReviewSet(index){
+  return Math.min(Math.max(index, 0), totalReviewSets() - 1);
+}
+function refreshReviewSetLabel(){
+  const nav = document.getElementById('reviewSetNav');
+  if(!nav) return;
+  document.getElementById('reviewSetLabel').textContent = `Batch ${state.reviewSet + 1} / ${totalReviewSets()}`;
+  document.getElementById('prevReviewSetBtn').disabled = state.reviewSet <= 0;
+  document.getElementById('nextReviewSetBtn').disabled = state.reviewSet >= totalReviewSets() - 1;
+}
+
+/* ---------- FAIR ROTATION QUEUE (equal chance to every word, N retries each) ---------- */
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return list[list.length-1];
+  return arr;
+}
+
+function buildFairQueue(words){
+  const repeats = Math.max(1, state.retries || 1);
+  let pool = [];
+  for(const w of words){
+    for(let i = 0; i < repeats; i++) pool.push(w.word.toLowerCase());
+  }
+  shuffle(pool);
+  // avoid the same word landing back-to-back where possible
+  for(let i = 1; i < pool.length; i++){
+    if(pool[i] === pool[i-1]){
+      for(let k = i + 1; k < pool.length; k++){
+        if(pool[k] !== pool[i-1] && pool[k] !== pool[i+1]){
+          [pool[i], pool[k]] = [pool[k], pool[i]];
+          break;
+        }
+      }
+    }
+  }
+  return pool;
+}
+
+function ensurePracticeQueue(){
+  const words = activeSetWords();
+  const wordKeys = words.map(w => w.word.toLowerCase()).sort().join(',');
+  const q = state.practiceQueue;
+  const stale = !q || q.setIndex !== state.currentSet || q.wordKeys !== wordKeys ||
+    q.retries !== (state.retries || 1) || q.index >= q.queue.length;
+  if(stale){
+    state.practiceQueue = {
+      setIndex: state.currentSet,
+      wordKeys: wordKeys,
+      retries: state.retries || 1,
+      queue: buildFairQueue(words),
+      index: 0
+    };
+  }
+}
+
+function ensureReviewQueue(){
+  const keys = getReviewSetKeys(state.reviewSet);
+  const wordKeys = keys.slice().sort().join(',');
+  const q = state.reviewQueueMeta;
+  const stale = !q || q.setIndex !== state.reviewSet || q.wordKeys !== wordKeys ||
+    q.retries !== (state.retries || 1) || q.index >= q.queue.length;
+  if(stale){
+    const words = keys.map(k => bankWordFor(k));
+    state.reviewQueueMeta = {
+      setIndex: state.reviewSet,
+      wordKeys: wordKeys,
+      retries: state.retries || 1,
+      queue: buildFairQueue(words),
+      index: 0
+    };
+  }
 }
 
 function speak(word){
@@ -430,16 +578,19 @@ function refreshGlobalStats(){
   document.getElementById('statStreak').textContent = streak;
 
   document.getElementById('bankCount').textContent = state.bank.length;
+  const activeReviewCount = reviewActiveKeys().length;
   const badge = document.getElementById('reviewBadge');
-  if(state.wrong.length > 0){ badge.style.display='inline-block'; badge.textContent = state.wrong.length; }
+  if(activeReviewCount > 0){ badge.style.display='inline-block'; badge.textContent = activeReviewCount; }
   else badge.style.display='none';
 
   refreshSetLabel();
+  refreshReviewSetLabel();
+  renderTempRemovedList();
 }
 
 function refreshDailyBar(){
   const day = getDaily();
-  const setWords = getSetWords(state.currentSet);
+  const setWords = activeSetWords();
   const setKeys = new Set(setWords.map(w => w.word.toLowerCase()));
   const doneInSet = day.done.filter(k => setKeys.has(k)).length;
   const target = setWords.length || DAILY_TARGET;
@@ -457,10 +608,10 @@ function recordResult(word, isCorrect){
     if(!state.wrong.includes(key)) state.wrong.push(key);
   }
   // NOTE: a correct answer no longer removes the word from the review queue.
-  // Words stay in Section B permanently until manually removed there.
+  // Words stay in Section B until manually removed (permanently) or temporarily removed.
 }
 
-/* ---------- PRACTICE TAB ---------- */
+/* ---------- PRACTICE TAB (Section A) ---------- */
 
 const qElems = {
   marksChip: document.getElementById('marksChip'),
@@ -469,29 +620,35 @@ const qElems = {
   answerInput: document.getElementById('answerInput'),
   submitBtn: document.getElementById('submitBtn'),
   nextBtn: document.getElementById('nextBtn'),
+  tempRemoveBtn: document.getElementById('tempRemoveBtn'),
   verdictZone: document.getElementById('verdictZone'),
+  emptyNote: document.getElementById('practiceEmptyNote'),
+  activeWrap: document.getElementById('practiceActive'),
 };
 
 function loadNextPractice(){
-  const day = getDaily();
-  const doneSet = new Set(day.done);
-  const setWords = getSetWords(state.currentSet);
-  let pool = setWords.filter(w => !doneSet.has(w.word.toLowerCase()));
-  if(pool.length === 0) pool = setWords.slice();
-
-  // 35% chance to pull from wrong queue (words needing revision) if available within this set
-  const wrongPool = pool.filter(w => state.wrong.includes(w.word.toLowerCase()));
-  if(wrongPool.length > 0 && Math.random() < 0.35){
-    current = wrongPool[Math.floor(Math.random()*wrongPool.length)];
-  } else {
-    current = weightedPick(pool);
+  const words = activeSetWords();
+  if(words.length === 0){
+    qElems.emptyNote.style.display = 'block';
+    qElems.activeWrap.style.display = 'none';
+    current = null;
+    awaitingAnswer = false;
+    return;
   }
+  qElems.emptyNote.style.display = 'none';
+  qElems.activeWrap.style.display = 'block';
+
+  ensurePracticeQueue();
+  const key = state.practiceQueue.queue[state.practiceQueue.index];
+  state.practiceQueue.index++;
+  current = bankWordFor(key);
 
   qElems.marksChip.textContent = '— hidden —';
   qElems.answerInput.value = '';
   qElems.answerInput.disabled = false;
   qElems.submitBtn.disabled = false;
   qElems.nextBtn.style.display = 'none';
+  qElems.tempRemoveBtn.style.display = 'none';
   qElems.verdictZone.innerHTML = '';
   awaitingAnswer = true;
   qElems.answerInput.focus();
@@ -517,7 +674,7 @@ function showStamp(zoneEl, isCorrect, word){
 }
 
 async function submitPracticeAnswer(){
-  if(!awaitingAnswer) return;
+  if(!awaitingAnswer || !current) return;
   const given = qElems.answerInput.value.trim().toLowerCase();
   const isCorrect = given === current.word.toLowerCase();
 
@@ -533,6 +690,7 @@ async function submitPracticeAnswer(){
   qElems.answerInput.disabled = true;
   qElems.submitBtn.disabled = true;
   qElems.nextBtn.style.display = 'inline-block';
+  qElems.tempRemoveBtn.style.display = 'inline-block';
   awaitingAnswer = false;
 
   showStamp(qElems.verdictZone, isCorrect, current.word);
@@ -542,30 +700,40 @@ async function submitPracticeAnswer(){
   await saveState();
 }
 
+async function tempRemoveCurrentPractice(){
+  if(!current) return;
+  const key = current.word.toLowerCase();
+  if(!state.tempRemoved.includes(key)) state.tempRemoved.push(key);
+  refreshGlobalStats();
+  await saveState();
+  loadNextPractice();
+}
+
 qElems.listenBtn.addEventListener('click', ()=>{ if(current) speak(current.word); });
 qElems.replayBtn.addEventListener('click', ()=>{ if(current) speak(current.word); });
 qElems.submitBtn.addEventListener('click', submitPracticeAnswer);
 qElems.nextBtn.addEventListener('click', loadNextPractice);
+qElems.tempRemoveBtn.addEventListener('click', tempRemoveCurrentPractice);
 qElems.answerInput.addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); submitPracticeAnswer(); }
 });
 
 document.getElementById('prevSetBtn').addEventListener('click', async ()=>{
   state.currentSet = clampSet(state.currentSet - 1);
-  refreshSetLabel();
+  refreshGlobalStats();
   refreshDailyBar();
   loadNextPractice();
   await saveState();
 });
 document.getElementById('nextSetBtn').addEventListener('click', async ()=>{
   state.currentSet = clampSet(state.currentSet + 1);
-  refreshSetLabel();
+  refreshGlobalStats();
   refreshDailyBar();
   loadNextPractice();
   await saveState();
 });
 
-/* ---------- REVIEW TAB ---------- */
+/* ---------- REVIEW TAB (Section B) ---------- */
 
 const rElems = {
   empty: document.getElementById('reviewEmpty'),
@@ -577,29 +745,40 @@ const rElems = {
   submitBtn: document.getElementById('reviewSubmitBtn'),
   nextBtn: document.getElementById('reviewNextBtn'),
   removeBtn: document.getElementById('reviewRemoveBtn'),
+  tempRemoveBtn: document.getElementById('reviewTempRemoveBtn'),
   verdictZone: document.getElementById('reviewVerdictZone'),
   list: document.getElementById('reviewList'),
 };
 
-function bankWordFor(lowerWord){
-  return state.bank.find(w => w.word.toLowerCase() === lowerWord) || { word: lowerWord, score: 5 };
-}
-
 function loadNextReview(){
   rElems.removeBtn.style.display = 'none';
+  rElems.tempRemoveBtn.style.display = 'none';
+
   if(state.wrong.length === 0){
+    rElems.empty.textContent = "No mistakes queued right now — jab bhi koi word galat hoga, wo yahan aa jayega, jab tak tum manually remove na karo.";
     rElems.empty.style.display = 'block';
     rElems.content.style.display = 'none';
     reviewCurrent = null;
     return;
   }
+  const activeKeys = reviewActiveKeys();
+  if(activeKeys.length === 0){
+    rElems.empty.textContent = "Is waqt saare mistake-words temporarily removed hain. Word Bank tab se restore karo.";
+    rElems.empty.style.display = 'block';
+    rElems.content.style.display = 'none';
+    reviewCurrent = null;
+    return;
+  }
+
   rElems.empty.style.display = 'none';
   rElems.content.style.display = 'block';
 
-  const key = state.wrong[Math.floor(Math.random()*state.wrong.length)];
+  ensureReviewQueue();
+  const key = state.reviewQueueMeta.queue[state.reviewQueueMeta.index];
+  state.reviewQueueMeta.index++;
   reviewCurrent = bankWordFor(key);
 
-  rElems.count.textContent = state.wrong.length;
+  rElems.count.textContent = getReviewSetKeys(state.reviewSet).length;
   rElems.input.value = '';
   rElems.input.disabled = false;
   rElems.submitBtn.disabled = false;
@@ -622,6 +801,7 @@ async function submitReviewAnswer(){
   rElems.submitBtn.disabled = true;
   rElems.nextBtn.style.display = 'inline-block';
   rElems.removeBtn.style.display = 'inline-block';
+  rElems.tempRemoveBtn.style.display = 'inline-block';
   reviewAwaiting = false;
 
   showStamp(rElems.verdictZone, isCorrect, reviewCurrent.word);
@@ -632,6 +812,16 @@ async function submitReviewAnswer(){
 
 async function removeFromReview(key){
   state.wrong = state.wrong.filter(w => w !== key);
+  state.reviewSet = clampReviewSet(state.reviewSet);
+  refreshGlobalStats();
+  renderReviewList();
+  await saveState();
+  loadNextReview();
+}
+
+async function tempRemoveFromReview(key){
+  if(!state.tempRemoved.includes(key)) state.tempRemoved.push(key);
+  state.reviewSet = clampReviewSet(state.reviewSet);
   refreshGlobalStats();
   renderReviewList();
   await saveState();
@@ -640,17 +830,22 @@ async function removeFromReview(key){
 
 function renderReviewList(){
   rElems.list.innerHTML = '';
+  const batchKeys = new Set(getReviewSetKeys(state.reviewSet));
   const sorted = state.wrong
+    .filter(k => batchKeys.has(k))
     .map(k => ({ key:k, entry: state.history[k] || {word:k, wrong:1, correct:0} }))
     .sort((a,b)=> (b.entry.wrong - a.entry.wrong));
   for(const item of sorted){
     const li = document.createElement('li');
-    li.innerHTML = `<span>${item.entry.word}</span><span class="review-actions"><span class="miss-count">missed ×${item.entry.wrong}</span><button class="remove-word-btn" data-key="${item.key}" title="Remove from review list">✕</button></span>`;
+    li.innerHTML = `<span>${item.entry.word}</span><span class="review-actions"><span class="miss-count">missed ×${item.entry.wrong}</span><button class="pause-word-btn" data-key="${item.key}" title="Temporarily remove">⏸</button><button class="remove-word-btn" data-key="${item.key}" title="Remove permanently">✕</button></span>`;
     rElems.list.appendChild(li);
   }
-  rElems.count.textContent = state.wrong.length;
+  rElems.count.textContent = getReviewSetKeys(state.reviewSet).length;
   rElems.list.querySelectorAll('.remove-word-btn').forEach(btn=>{
     btn.addEventListener('click', ()=> removeFromReview(btn.dataset.key));
+  });
+  rElems.list.querySelectorAll('.pause-word-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> tempRemoveFromReview(btn.dataset.key));
   });
 }
 
@@ -659,11 +854,27 @@ rElems.replayBtn.addEventListener('click', ()=>{ if(reviewCurrent) speak(reviewC
 rElems.submitBtn.addEventListener('click', submitReviewAnswer);
 rElems.nextBtn.addEventListener('click', loadNextReview);
 rElems.removeBtn.addEventListener('click', ()=>{ if(reviewCurrent) removeFromReview(reviewCurrent.word.toLowerCase()); });
+rElems.tempRemoveBtn.addEventListener('click', ()=>{ if(reviewCurrent) tempRemoveFromReview(reviewCurrent.word.toLowerCase()); });
 rElems.input.addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); submitReviewAnswer(); }
 });
 
-/* ---------- WORD BANK TAB ---------- */
+document.getElementById('prevReviewSetBtn').addEventListener('click', async ()=>{
+  state.reviewSet = clampReviewSet(state.reviewSet - 1);
+  refreshGlobalStats();
+  renderReviewList();
+  loadNextReview();
+  await saveState();
+});
+document.getElementById('nextReviewSetBtn').addEventListener('click', async ()=>{
+  state.reviewSet = clampReviewSet(state.reviewSet + 1);
+  refreshGlobalStats();
+  renderReviewList();
+  loadNextReview();
+  await saveState();
+});
+
+/* ---------- WORD BANK TAB (Section C) ---------- */
 
 document.getElementById('importBtn').addEventListener('click', async ()=>{
   const raw = document.getElementById('importBox').value;
@@ -690,17 +901,67 @@ document.getElementById('importBtn').addEventListener('click', async ()=>{
 });
 
 document.getElementById('resetStatsBtn').addEventListener('click', async ()=>{
-  if(!confirm('Sab stats aur mistakes reset ho jayenge (word bank safe rahega). Confirm?')) return;
+  if(!confirm('Sab stats aur mistakes reset ho jayenge (word bank aur temporarily-removed list safe rahegi). Confirm?')) return;
   state.history = {};
   state.wrong = [];
   state.daily = {};
   state.currentSet = 0;
+  state.reviewSet = 0;
+  state.practiceQueue = null;
+  state.reviewQueueMeta = null;
   refreshGlobalStats();
   refreshDailyBar();
   renderReviewList();
   document.getElementById('importStatus').textContent = 'Stats reset ho gaye.';
   await saveState();
+  loadNextPractice();
 });
+
+const retriesInput = document.getElementById('retriesInput');
+document.getElementById('saveRetriesBtn').addEventListener('click', async ()=>{
+  let val = parseInt(retriesInput.value, 10);
+  if(isNaN(val) || val < 1) val = 1;
+  if(val > 20) val = 20;
+  retriesInput.value = val;
+  state.retries = val;
+  state.practiceQueue = null;
+  state.reviewQueueMeta = null;
+  document.getElementById('retriesStatus').textContent = `Har word ab rotation me ${val} baar aayega.`;
+  await saveState();
+  loadNextPractice();
+  if(document.getElementById('panel-review').classList.contains('active')) loadNextReview();
+});
+
+function renderTempRemovedList(){
+  const list = document.getElementById('tempRemovedList');
+  const emptyNote = document.getElementById('tempRemovedEmpty');
+  const countChip = document.getElementById('tempRemovedCount');
+  list.innerHTML = '';
+  countChip.textContent = state.tempRemoved.length;
+  if(state.tempRemoved.length === 0){
+    emptyNote.style.display = 'block';
+    return;
+  }
+  emptyNote.style.display = 'none';
+  for(const key of state.tempRemoved){
+    const w = bankWordFor(key);
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${w.word}</span><button class="restore-word-btn" data-key="${key}">Restore</button>`;
+    list.appendChild(li);
+  }
+  list.querySelectorAll('.restore-word-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.tempRemoved = state.tempRemoved.filter(k => k !== btn.dataset.key);
+      state.practiceQueue = null;
+      state.reviewQueueMeta = null;
+      refreshGlobalStats();
+      renderReviewList();
+      await saveState();
+      loadNextPractice();
+      if(document.getElementById('panel-review').classList.contains('active')) loadNextReview();
+    });
+  });
+}
 
 /* ---------- TABS ---------- */
 
@@ -710,7 +971,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab === 'review' && !reviewCurrent) loadNextReview();
+    if(btn.dataset.tab === 'review'){ renderReviewList(); loadNextReview(); }
   });
 });
 
@@ -719,6 +980,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 (async function init(){
   document.getElementById('todayDate').textContent = niceDate();
   await loadState();
+  retriesInput.value = state.retries;
   refreshGlobalStats();
   refreshDailyBar();
   renderReviewList();
